@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+        canvas {
+            background-color: #000;
+        }
+        .scoreboard {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #000;
+            background-color: aquamarine;
+        }
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #pauseButton {
+            background-color: #1a0793;
+            color: white;
+        }
+        #restartButton {
+            background-color: #03751c;
+            color: white;
+        }
+        .control-button {
+            background-color: #3498db;
+            color: white;
+            width: 50px;
+            height: 50px;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="scoreboard">
+        Score: <span id="score">0</span> | High Score: <span id="highScore">0</span>
+    </div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="controls">
+        <button id="pauseButton">Pause</button>
+        <button id="restartButton">Restart</button>
+        <div class="button-row">
+            <button class="control-button" id="upButton">⬆</button>
+        </div>
+        <div class="button-row">
+            <button class="control-button" id="leftButton">⬅</button>
+            <button class="control-button" id="downButton">⬇</button>
+            <button class="control-button" id="rightButton">➡</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("score");
+        const highScoreDisplay = document.getElementById("highScore");
+        const pauseButton = document.getElementById("pauseButton");
+        const restartButton = document.getElementById("restartButton");
+        const upButton = document.getElementById("upButton");
+        const downButton = document.getElementById("downButton");
+        const leftButton = document.getElementById("leftButton");
+        const rightButton = document.getElementById("rightButton");
+        
+        const box = 20;
+        let snake = [{ x: 200, y: 200 }];
+        let direction = "RIGHT";
+        let food = {
+            x: Math.floor(Math.random() * 20) * box,
+            y: Math.floor(Math.random() * 20) * box,
+        };
+        let score = 0;
+        let highScore = localStorage.getItem("highScore") || 0;
+        highScoreDisplay.textContent = highScore;
+        let game;
+        let isPaused = false;
+
+        document.addEventListener("keydown", changeDirection);
+        pauseButton.addEventListener("click", togglePause);
+        restartButton.addEventListener("click", restartGame);
+        upButton.addEventListener("click", () => changeDirection({ key: "ArrowUp" }));
+        downButton.addEventListener("click", () => changeDirection({ key: "ArrowDown" }));
+        leftButton.addEventListener("click", () => changeDirection({ key: "ArrowLeft" }));
+        rightButton.addEventListener("click", () => changeDirection({ key: "ArrowRight" }));
+
+        function changeDirection(event) {
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+            if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            pauseButton.textContent = isPaused ? "Resume" : "Pause";
+        }
+
+        function draw() {
+            if (isPaused) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? "darkgreen" : "lime";
+                ctx.strokeStyle = "black";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+            
+            let headX = snake[0].x;
+            let headY = snake[0].y;
+
+            if (direction === "UP") headY -= box;
+            if (direction === "DOWN") headY += box;
+            if (direction === "LEFT") headX -= box;
+            if (direction === "RIGHT") headX += box;
+
+            if (headX === food.x && headY === food.y) {
+                food = {
+                    x: Math.floor(Math.random() * 20) * box,
+                    y: Math.floor(Math.random() * 20) * box,
+                };
+                score += 10;
+                scoreDisplay.textContent = score;
+            } else {
+                snake.pop();
+            }
+
+            let newHead = { x: headX, y: headY };
+            
+            if (
+                headX < 0 || headX >= canvas.width ||
+                headY < 0 || headY >= canvas.height ||
+                snake.some(segment => segment.x === headX && segment.y === headY)
+            ) {
+                clearInterval(game);
+                alert("Game Over!");
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("highScore", highScore);
+                    highScoreDisplay.textContent = highScore;
+                }
+                return;
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function restartGame() {
+            clearInterval(game);
+            snake = [{ x: 200, y: 200 }];
+            direction = "RIGHT";
+            food = {
+                x: Math.floor(Math.random() * 20) * box,
+                y: Math.floor(Math.random() * 20) * box,
+            };
+            score = 0;
+            scoreDisplay.textContent = score;
+            isPaused = false;
+            pauseButton.textContent = "Pause";
+            game = setInterval(draw, 100);
+        }
+
+        game = setInterval(draw, 100);
+    </script>
+</body>
+</html>
