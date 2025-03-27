@@ -102,7 +102,10 @@
         highScoreDisplay.textContent = highScore;
         let game;
         let isPaused = false;
-
+        
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        let speed = isMobile ? 150 : 100;
+        
         document.addEventListener("keydown", changeDirection);
         pauseButton.addEventListener("click", togglePause);
         restartButton.addEventListener("click", restartGame);
@@ -110,26 +113,26 @@
         downButton.addEventListener("click", () => changeDirection({ key: "ArrowDown" }));
         leftButton.addEventListener("click", () => changeDirection({ key: "ArrowLeft" }));
         rightButton.addEventListener("click", () => changeDirection({ key: "ArrowRight" }));
-
+        
         function changeDirection(event) {
             if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
             if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
             if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
             if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
         }
-
+        
         function togglePause() {
             isPaused = !isPaused;
             pauseButton.textContent = isPaused ? "Resume" : "Pause";
         }
-
+        
         function draw() {
             if (isPaused) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             ctx.fillStyle = "red";
             ctx.fillRect(food.x, food.y, box, box);
-
+            
             for (let i = 0; i < snake.length; i++) {
                 ctx.fillStyle = i === 0 ? "darkgreen" : "lime";
                 ctx.strokeStyle = "black";
@@ -139,12 +142,12 @@
             
             let headX = snake[0].x;
             let headY = snake[0].y;
-
+            
             if (direction === "UP") headY -= box;
             if (direction === "DOWN") headY += box;
             if (direction === "LEFT") headX -= box;
             if (direction === "RIGHT") headX += box;
-
+            
             if (headX === food.x && headY === food.y) {
                 food = {
                     x: Math.floor(Math.random() * 20) * box,
@@ -155,14 +158,10 @@
             } else {
                 snake.pop();
             }
-
+            
             let newHead = { x: headX, y: headY };
             
-            if (
-                headX < 0 || headX >= canvas.width ||
-                headY < 0 || headY >= canvas.height ||
-                snake.some(segment => segment.x === headX && segment.y === headY)
-            ) {
+            if (headX < 0 || headX >= canvas.width || headY < 0 || headY >= canvas.height || snake.some(segment => segment.x === headX && segment.y === headY)) {
                 clearInterval(game);
                 alert("Game Over!");
                 if (score > highScore) {
@@ -172,26 +171,22 @@
                 }
                 return;
             }
-
+            
             snake.unshift(newHead);
         }
-
+        
         function restartGame() {
             clearInterval(game);
             snake = [{ x: 200, y: 200 }];
             direction = "RIGHT";
-            food = {
-                x: Math.floor(Math.random() * 20) * box,
-                y: Math.floor(Math.random() * 20) * box,
-            };
             score = 0;
             scoreDisplay.textContent = score;
             isPaused = false;
             pauseButton.textContent = "Pause";
-            game = setInterval(draw, 100);
+            game = setInterval(draw, speed);
         }
-
-        game = setInterval(draw, 100);
+        
+        game = setInterval(draw, speed);
     </script>
 </body>
 </html>
